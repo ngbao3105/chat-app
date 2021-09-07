@@ -1,0 +1,22 @@
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 offset-md-3 col-sm-12">
+            <h1 class="text-center">
+                MongoChat 
+                <button (clear)="clearChat($event)" class="btn btn-danger">Clear</button>
+            </h1>
+            <div #status></div>
+            <div #chat>
+                <input type="text"#username class="form-control" placeholder="Enter name...">
+                <br>
+                <div class="card">
+                    <div #messages id="messages" class="card-block">
+
+                    </div>
+                </div>
+                <br>
+                <textarea #textarea id="textarea" (keydown)="keydown($event)" class="form-control" placeholder="Enter message..."></textarea>
+            </div>
+        </div>
+    </div>
+</div>
