@@ -8,7 +8,7 @@ export class SocketioService {
   socket;
   constructor() { }
   setupSocketConnection() {
-    this.socket = io(environment.SOCKET_ENDPOINT);
+    this.socket = io(environment.SOCKET_ENDPOINT, { transports: ["websocket"] });
   }
 
   disconnect() {

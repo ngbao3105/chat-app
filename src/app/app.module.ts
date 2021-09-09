@@ -5,7 +5,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ChatRoomComponent } from './chat-room/chat-room.component';
 import { SocketioService } from './socketio.service';
-
 @NgModule({
   declarations: [
     AppComponent,
@@ -13,9 +12,10 @@ import { SocketioService } from './socketio.service';
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
   ],
   providers: [SocketioService],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule { 
+}

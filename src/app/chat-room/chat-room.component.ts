@@ -20,7 +20,6 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
 
 
   ngOnInit(): void {
-    console.log("on init");
     this.socketService.setupSocketConnection();
     //check for connection
     if (this.socketService.socket !== undefined) {
