@@ -43,20 +43,20 @@ const getMessagesByRoomId = async (args) => {
   client.close();
   return result;
 };
-const insertMessage = async (args) => {
-  try {
-    const client = new MONGODB_CLIENT(MONGODB_URI, {
-      ...MONGODB_CLIENT_OPTIONS
-    });
-    await client.connect();
-    const db = client.db(MONGODB_DB_NAME);
-    const result = await db.collection('messages').insertOne(args.input);
-    client.close();
-    return result;
-  } catch (error) {
-    return 400;
-  };
-};
+// const insertMessage = async (args) => {
+//   try {
+//     const client = new MONGODB_CLIENT(MONGODB_URI, {
+//       ...MONGODB_CLIENT_OPTIONS
+//     });
+//     await client.connect();
+//     const db = client.db(MONGODB_DB_NAME);
+//     const result = await db.collection('messages').insertOne(args.input);
+//     client.close();
+//     return result;
+//   } catch (error) {
+//     return 400;
+//   };
+// };
 const deleteMessage = async (args) => {
   try {
     let filter = {
@@ -85,6 +85,5 @@ const deleteMessage = async (args) => {
 module.exports = {
   getMessages,
   getMessagesByRoomId,
-  insertMessage,
   deleteMessage
 }

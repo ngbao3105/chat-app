@@ -1,6 +1,6 @@
 'use strict';
 
-const USER_TYPE = `
+const USER_TYPES = `
   type User {
     _id:String,
     userName: String,
@@ -13,5 +13,5 @@ const USER_TYPE = `
 `;
 
 module.exports = {
-    USER_TYPE
+    USER_TYPES
 };

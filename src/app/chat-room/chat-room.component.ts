@@ -15,77 +15,43 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   @ViewChild("textarea", { static: true }) textarea: ElementRef<HTMLElement>;
   statusDefault: boolean;
   socket;
+  private roomName = "general";
+  private userName = "Joyse";
   constructor(private socketService: SocketioService, private renderer: Renderer2) {
   }
-
-
   ngOnInit(): void {
-    this.socketService.setupSocketConnection();
+    this.socketService.setupSocketConnection(this.userName, this.roomName);
     //check for connection
     if (this.socketService.socket !== undefined) {
       this.socket = this.socketService.socket;
-      this.socket.on("output", (data) => {
-        if (data.length) {
-          //build out message div
-          data.forEach((item, idx) => {
-            let message = document.createElement("div");
-            message.setAttribute("class", "chat-message");
-            message.textContent = `${item.name}: ${item.message}`;
-            this.renderer.appendChild(this.messages, message);
-            // this.renderer.insertBefore(this.messages,message,this.messages.nativeElement.firstChild);
-          })
-        }
-      });
-
-      //Get status from server
-      this.socket.on("status",(data)=>{
-        //get message status
-        this.setStatus((typeof data ==="object") ? data.message : data);
-
-        //if status is clear text
-        if(data.clear){
-          this.textarea.nativeElement.nodeValue = "";
-        }
+      this.socket.on("message", (data) => {
+        this.outputMessage(data);
       })
-
-
     }
   }
-  formatMMDDYYYY (data){
-    return (data.getMonth() + 1) + 
-    "/" +  data.getDate() +
-    "/" +  data.getFullYear();
-}
-
-  keydown(event){
-    if(event.which == 13  && event.shiftKey == false){
-      // Emit to server input 
-      this.socket.emit("input",{
-        name: this.username.nativeElement.nodeValue,
-        message: this.textarea.nativeElement.nodeValue,
-        createdAt: this.formatMMDDYYYY(new Date()),
-        // createdById:createdById
-      })
-      event.preventDefault();
-    }
+  roomClick(roomName) {
+    console.log(this.socket.current);
+    this.socket.emit("joinRoom", this.roomName);
   }
 
-  clearChat(event){
-    this.socket.emit("clear");
-    //clear messages 
-    this.socket.on("clear",()=>{
-      this.messages.nativeElement.textContent = "";
-    })
+  submitMessage(event) {
+    event.preventDefault();
+    const msg = <HTMLInputElement>document.getElementById("msg");
+
+    //Emit message to server
+    this.socket.emit('chatMessage', msg.value)
   }
-  setStatus(status) {
-    //Set status
-    status.textContent = status;
-    if (status != this.statusDefault) {
-      let delay = setTimeout(() => {
-        this.setStatus(this.statusDefault);
-      }, 4000)
-    }
-  }
+
+  outputMessage(message) {
+    const div = document.createElement("div");
+    div.classList.add("message");
+    div.innerHTML = ` <p class="meta">Sam <span>9:15pm</span></p>
+                        <p class="text">
+                        ${message}
+                    </p>`;
+    document.querySelector(".chat-messages").appendChild(div);
+  };
+
   ngOnDestroy(): void {
     this.socketService.disconnect();
   }

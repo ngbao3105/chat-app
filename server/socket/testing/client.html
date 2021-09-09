@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Realtime client with socket.io</title>
+</head>
+
+<body>
+    <h1>Realtime client with socket.io</h1>
+
+    <script src="https://cdn.socket.io/4.1.2/socket.io.min.js" integrity="sha384-toS6mmwu70G0fw54EGlWWeA4z3dyJ+dlXBtSURSKN4vyRFOcxd3Bzjj/AoOwY+Rg" crossorigin="anonymous"></script>
+
+    <script>
+        (function connect() {
+            let socket = io('http://localhost:3000', { transports: ["websocket"] });
+            const socketInterval = setInterval(() => {
+                socket.emit("event", JSON.stringify({ _id: socket.id, date: new Date().toString(), message: `Emitted event !!!` }));
+                socket.on("message",(data)=>{
+                    socket.emit("messageFromClient",data);
+                })
+            }, 1000);
+            setTimeout(() => {
+                clearInterval(socketInterval);
+            }, 2000);
+        })();
+    </script>
+</body>
+
+</html>

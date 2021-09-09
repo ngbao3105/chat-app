@@ -4,3 +4,6 @@ const MESSAGE_QUERY = `
     ${getMessages}
     ${getMessagesByRoomId}
 `
+module.exports = {
+    MESSAGE_QUERY
+  };

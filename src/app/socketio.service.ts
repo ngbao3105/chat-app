@@ -7,8 +7,9 @@ import { environment } from './environment';
 export class SocketioService {
   socket;
   constructor() { }
-  setupSocketConnection() {
-    this.socket = io(environment.SOCKET_ENDPOINT, { transports: ["websocket"] });
+  setupSocketConnection(userName,roomName) {
+    this.socket = io(environment.SOCKET_ENDPOINT, { transports: ['websocket']});
+    this.socket.emit("joinRoom",{userName,roomName});
   }
 
   disconnect() {

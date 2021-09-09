@@ -5,3 +5,7 @@ const ROOM_QUERY = `
     ${getRooms}
     ${getRoomById}
 `
+module.exports = {
+    ROOM_QUERY
+  };
+  

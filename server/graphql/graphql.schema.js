@@ -11,11 +11,10 @@ const {
 const {
   getMessages,
   getMessagesByRoomId,
-  insertMessage,
   deleteMessage
 } = require('./message/message.resolver');
 const {
-  USER_TYPE
+  USER_TYPES
 } = require('./user/user.types');
 const {
   USER_QUERY
@@ -25,7 +24,7 @@ const {
   getUserById
 } = require('./user/user.resolver');
 const {
-  ROOM_TYPE
+  ROOM_TYPES
 } = require('./room/room.types');
 const {
   ROOM_QUERY
@@ -35,17 +34,21 @@ const {
   getRoomById
 } = require('./room/room.resolver');
 
+const {
+  buildSchema
+} = require('graphql');
+
 const schema = buildSchema(`
     ${MESSAGE_TYPES}
-    ${USER_TYPE}
-    ${ROOM_TYPE}
+    ${USER_TYPES}
+    ${ROOM_TYPES}
     type Query { 
         ${MESSAGE_QUERY}
         ${USER_QUERY}
         ${ROOM_QUERY}
     }
     type Mutation {
-        ${MESSAGE_MUTATION}
+      ${MESSAGE_MUTATION}
     }
 `);
 
@@ -91,12 +94,12 @@ const root = {
     });
     return result;
   },
-  insertMessage: async (args) => {
-    const result = await insertMessage(args);
-    return result;
-  },
-  deleteMessage: async (args) => {
-    const result = await deleteMessage(args);
+  deleteMessage: async ({
+    _id
+  }) => {
+    const result = await deleteMessage({
+      _id: _id
+    });
     return result;
   }
   //#endregion

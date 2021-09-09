@@ -1,6 +1,6 @@
 'use strict';
 
-const MESSAE_TYPE = `
+const MESSAGE_TYPES = `
   type Message {
     _id:String,
     chatRoomId: String!,
@@ -13,14 +13,8 @@ const MESSAE_TYPE = `
       messages: [Message],
       total: Float
   }
-  input MessageInput {
-    chatRoomId: Room!,
-    content: String!,
-    createdBy: User!,
-    createdAt: String!,
-  }
 `;
 
 module.exports = {
-    MESSAE_TYPE
+  MESSAGE_TYPES
 };

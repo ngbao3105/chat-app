@@ -1,6 +1,6 @@
 'use strict';
 
-const ROOM_TYPE = `
+const ROOM_TYPES = `
   type Room {
     _id:String,
     userIds: [String],
@@ -14,5 +14,5 @@ const ROOM_TYPE = `
 `;
 
 module.exports = {
-    ROOM_TYPE
+    ROOM_TYPES
 };
