@@ -24,11 +24,6 @@ registerSocketServerEventHandlers(socketServer);
 server.listen(PORT, HOSTNAME, () => {
     console.log(`Server listening at http://${HOSTNAME}:${PORT} in ${NODE_ENV} environment`);
 });
-// // Connection URL
-// const url = 'mongodb://localhost:27017/chatroom';
-// // //Connect to mongodb
-// mongo.connect(url, (err, db) => {
-// })
 
 
 
