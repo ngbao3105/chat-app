@@ -1,6 +1,6 @@
 <div class="wrapper">
   <div class="title">
-    <h1>Chat App</h1>
+    <h1>One Day Chat App <i>(All messages will be deleted at every 00:00 UTC)</i></h1>
   </div>
   <div class="container">
     <div class="left-side-bar">
@@ -8,7 +8,12 @@
         <h5 style="margin-bottom: 10px">1. Choose a user</h5>
         <select class="form-select" (change)="onUserChange($event)">
           <ng-container *ngFor="let user of users">
-            <option [value]="user.userId" [selected]="selectedUser.userId == user.userId ? true : false">{{ user.userName }}</option>
+            <option
+              [value]="user.userId"
+              [selected]="selectedUser.userId == user.userId ? true : false"
+            >
+              {{ user.userName }}
+            </option>
           </ng-container>
         </select>
       </div>
@@ -20,7 +25,9 @@
             <p
               (click)="selectChannel(channel)"
               [ngClass]="
-                channel.channelId == selectedChannel.channelId ? 'active' : 'disactive'
+                channel.channelId == selectedChannel.channelId
+                  ? 'active'
+                  : 'disactive'
               "
             >
               {{ channel.channelName }}
@@ -31,46 +38,40 @@
     </div>
 
     <div class="chat-window">
-      <div class="chats">
-        <!-- <div class="user-join">
-          <p>Joyse joined the channel</p>
-        </div> -->
-        <!-- <div class="message incoming">
-          <h5>Russel</h5>
-          <p>Hello guys</p>
-        </div>
-        <div class="message outgoing">
-          <h5>Sam</h5>
-          <p>Hello guys</p>
-        </div> -->
+      <div class="chats" #chats>
+          <button type="button" class="btn btn-info btn-readMore">
+            Read More <i class="fa fa-arrow-up"></i>
+          </button>
       </div>
       <div class="user-input">
         <input
+          class="input-message"
           style="
             font-size: 16px;
             background-color: #ffffff;
             padding: 10px 20px;
             outline: none;
             border: none;
-            width: 95%;
-            border-radius: 50px 0 0 50px;
+            width: 80%;
+            border-radius: 10px 0 0 10px;
           "
-          [(ngModel)] = "message"
+          [(ngModel)]="message"
+          (keydown.enter)="sendMessage($event)"
           type="text"
           placeholder="Type your message..."
         />
         <button
-          class="btn"
+          class="btn btn-send"
           (click)="sendMessage($event)"
           style="
             font-size: 17px;
             padding: 10px 20px;
             border: none;
             outline: none;
-            width: 5%;
+            width: 15%;
             color: #ffffff;
             background-color: #2791cf;
-            border-radius: 0 50px 50px 0;
+            border-radius: 0 10px 10px 0;
           "
         >
           <i class="fas fa-paper-plane" style="color: white"></i>

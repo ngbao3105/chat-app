@@ -1,4 +1,8 @@
-const users = [];
+const users = [
+    {"userId": "Joyse","userName":"Joyse","avatar":""},
+    {"userId": "Russel","userName":"Russel","avatar":""},
+    {"userId": "Sam","userName":"Sam","avatar":""}
+]
 
 //Join user to chat
 
@@ -9,12 +13,12 @@ const userJoin = (id,userName,channelName) => {
 }
 
 //Get current user 
-const getCurrentUser = (id) => {
-    return users.find(user => user.id == id);
+const getUser = (id) => {
+    return users.find(user => user.userId == id);
 }
 
 
 module.exports = {
     userJoin,
-    getCurrentUser
+    getUser
 }

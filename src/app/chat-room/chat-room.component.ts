@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewChild, ViewEncapsulation } from '@angular/core';
 import { SocketioService } from '../socketio.service';
 import * as moment from 'moment';
 import { FormControl } from '@angular/forms';
@@ -11,7 +11,9 @@ declare let jQuery: any;
   styleUrls: ['./chat-room.component.scss'],
   encapsulation: ViewEncapsulation.None,
 })
-export class ChatRoomComponent implements OnInit, OnDestroy {
+export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild("chats", { static: true }) chats: ElementRef<HTMLDivElement>;
+
   statusDefault: boolean;
   socket;
 
@@ -20,44 +22,50 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
   public users = Users;
   public selectedUser = this.users[0];
   public selectedChannel = this.channels[0];
-  private pageNumber = 0;
+  private morePageNumber = 0;
   private paginatorLimit = 10;
+  public isDataFetchedAll = false;
   panelColor: FormControl;
   constructor(private socketService: SocketioService, private renderer: Renderer2, private service: ChatServiceService,) {
   }
-  ngOnInit(): void {
-    this.panelColor = new FormControl('');
-    this.socketService.setupSocketConnection();
-    //check for connection
-    if (this.socketService.socket !== undefined) {
-      this.socket = this.socketService.socket;
-      this.socket.emit('joinRoom', { userName: this.selectedUser.userName, channelName: this.selectedChannel.channelName });
 
+  ngOnInit(): void {
+    this.leaveAndJoinChannel();
+
+  }
+  selectChannel(channel) {
+    this.selectedChannel = channel;
+    this.leaveAndJoinChannel();
+    this.renderer.setProperty(this.chats.nativeElement, 'innerHTML', "");
+    this.insertReadMoreButton();
+    // this.socketService.socket.emit("joinRoom", this.roomName);
+  }
+
+  leaveAndJoinChannel() {
+    if (this.socketService.socket !== undefined) {
+      this.socketService.socket.disconnect();
+    }
+    this.socketService.setupSocketConnection();
+    if (this.socketService.socket !== undefined) {
+      this.socketService.socket.emit('joinRoom', { user: this.selectedUser, channel: this.selectedChannel });
       //Message from server
-      this.socket.on("message", (data) => {
+      this.socketService.socket.on("message", (data) => {
         if (data != 400) {
           this.outputMessage(data);
         }
       })
 
       //Admin message from server 
-      this.socket.on("admin-message", (data) => {
+      this.socketService.socket.on("admin-message", (data) => {
         this.formatAdminMessage(data);
-        this.fetchMoreMessages(true);
       })
+      this.fetchLatestMessages();
     }
 
-  }
-  selectChannel(channel) {
-    this.socket.disconnect();
-    this.selectedChannel = channel;
-    this.socket.emit('joinRoom', { userName: this.selectedUser.userName, channelName: this.selectedChannel.channelName });
-    // this.socket.emit("joinRoom", this.roomName);
   }
 
   sendMessage(event) {
     event.preventDefault();
-
     if (this.message != "") {
       let body = JSON.stringify({
         query: `
@@ -74,17 +82,19 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
       this.service.postBody(body).pipe().subscribe({
         next: () => {
           //Emit message to server
-          this.socket.emit("chatMessage", this.message);
+          this.socketService.socket.emit("chatMessage", this.message);
           this.message = "";
         },
         error: (err) => { throw err }
       })
     }
   }
+  onMessageEnter(event) {
+    console.log(event);
+  }
   fetchLatestMessages() {
     //config pageNumber 
-    this.pageNumber = 0;
-    let paginatorSkip = this.pageNumber > 0 ? ((this.pageNumber - 1) * this.paginatorLimit) : 0
+    let paginatorSkip = 0;
     let body = JSON.stringify({
       query: `
     query {
@@ -100,20 +110,19 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     this.service.postBody(body).subscribe({
       next: (data) => {
         let dataArray = data.data.fetchMessages;
-        dataArray.forEach((item, idx) => {
-          item["userName"] = item.userId;
-          this.outputMessage(item);
+        dataArray.forEach((message, idx) => {
+          message["userName"] = message.userId;
+          this.outputMessage(message);
         })
       },
       error: (err) => { throw err }
     })
   }
 
-  fetchMoreMessages(old) {
+  fetchMoreMessages(isOld = true) {
     //config pageNumber 
-    this.pageNumber = 1;
-    old ? this.pageNumber = this.pageNumber + 1 : this.pageNumber = this.pageNumber - 1;
-    let paginatorSkip = this.pageNumber > 0 ? ((this.pageNumber - 1) * this.paginatorLimit) : 0
+    isOld ? this.morePageNumber = this.morePageNumber + 1 : this.morePageNumber = this.morePageNumber - 1;
+    let paginatorSkip = this.morePageNumber > 0 ? ((this.morePageNumber - 1) * this.paginatorLimit) : 0
     let body = JSON.stringify({
       query: `
     query {
@@ -129,10 +138,16 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     this.service.postBody(body).subscribe({
       next: (data) => {
         let dataArray = data.data.fetchMessages;
-        dataArray.forEach((item, idx) => {
-          item["userName"] = item.userId;
-          this.outputMessage(item);
-        })
+        if (dataArray != undefined && dataArray.length > 0) {
+          dataArray.forEach((message, idx) => {
+            message["userName"] = message.userId;
+            if (isOld) {
+              this.previouseMessage(message);
+            }
+          })
+        } else if (dataArray == undefined && data.data.length == 0) {
+          this.isDataFetchedAll = true;
+        }
       },
       error: (err) => { throw err }
     })
@@ -143,7 +158,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     if (message.text !== "") {
       const div = document.createElement("div");
 
-      div.innerHTML = ` <h5>${message.userName}</h5>
+      div.innerHTML = ` <h5><b>${message.userName}</b></h5>
                         <p>${message.text}</p>
                         `;
       //Scroll down when new message submitted
@@ -158,6 +173,25 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
     }
   };
 
+  previouseMessage(message) {
+    if (message.text !== "") {
+      const div = document.createElement("div");
+
+      div.innerHTML = ` <h5><b>${message.userName}</b></h5>
+                        <p>${message.text}</p>
+                        `;
+      //Scroll down when new message submitted
+      const readMoreBtn = document.querySelector(".btn-readMore");
+      if (message.userName == this.selectedUser.userName) {
+        div.classList.add("message", "outgoing");
+      } else {
+        div.classList.add("message", "incoming");
+      }
+      jQuery(div).insertAfter(readMoreBtn);
+      // chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  }
+
   formatAdminMessage(message) {
     if (message.text !== "") {
       const div = document.createElement("div");
@@ -165,15 +199,41 @@ export class ChatRoomComponent implements OnInit, OnDestroy {
       //Scroll down when new message submitted
       const chatMessages = document.querySelector(".chats");
       div.classList.add("user-join");
-      chatMessages.appendChild(div);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+      jQuery(div).insertAfter(chatMessages.firstChild);
+      // chatMessages.scrollTop = chatMessages.scrollHeight;
     }
   };
+
+  insertReadMoreButton() {
+    const button = document.createElement("button");
+    button.innerHTML = `Read More <i class="fa fa-arrow-up"></i>`;
+    // <button type="button" class="btn btn-info btn-readMore">
+    button.classList.add("btn", "btn-info", "btn-readMore");
+    const chatMessages = document.querySelector(".chats");
+    chatMessages.appendChild(button);
+  }
   //#endregion
   onUserChange(event) {
     let selectedUserId = event.target.value;
     this.selectedUser = (this.users.filter(item => item.userId == selectedUserId))[0];
+    this.leaveAndJoinChannel();
+    this.renderer.setProperty(this.chats.nativeElement, 'innerHTML', "");
+    this.insertReadMoreButton();
   }
+
+  registerEventDelegation() {
+    //register event delegate for readmore button
+    const chatElement = document.querySelector(".chats");
+    chatElement.addEventListener('click', (event: any) => {
+      if (event.target.tagName == "BUTTON" && event.target.className == "btn btn-info btn-readMore") {
+        this.fetchMoreMessages(true);
+      }
+    })
+  }
+  ngAfterViewInit(): void {
+    this.registerEventDelegation();
+  }
+
 
 
   ngOnDestroy(): void {
