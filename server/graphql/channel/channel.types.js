@@ -3,7 +3,8 @@
 const CHANNEL_TYPES = `
   type Channel {
     _id:String,
-    userIds: [String],
+    channelId:String!,
+    channelName:String!
   }
   type Channels {
       channels: [Channel],

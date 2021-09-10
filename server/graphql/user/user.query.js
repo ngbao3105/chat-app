@@ -1,4 +1,4 @@
-const getUsers = `getUsers:Users`;
+const getUsers = `getUsers:[User]!`;
 const getUserById = `getUserById(_id:String):User`
 
 const USER_QUERY = `

@@ -54,7 +54,7 @@ const postMessage = async ({
       channelId: channelId,
       text: text,
       user: user,
-      createdAt: moment().utc().format("YYYY-MM-DD HH:mm"),
+      createdAt: moment().utc().format(),
       _id: _id
     };
     const result = await db.collection('messages').insertOne(body);

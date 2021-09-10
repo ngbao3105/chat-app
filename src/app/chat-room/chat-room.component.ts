@@ -6,6 +6,7 @@ import { Users, Channels } from "../dataJson";
 import { ChatServiceService } from '../chat-service.service';
 import { SharedPropertyService } from './shared/shared-property.service';
 import { takeUntil, debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 declare let jQuery: any;
 @Component({
   selector: 'app-chat-room',
@@ -20,11 +21,11 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   currentScrollHeight = 0;
   chatsElement: HTMLElement;
   public messageText: FormControl;
-  public channels = Channels;
   public message = "";
-  public users = Users;
-  public selectedUser = this.users[0];
-  public selectedChannel = this.channels[0];
+  public channels: any;
+  public users: any;
+  public selectedUser: any;
+  public selectedChannel: any;
   private morePageNumber = 1;
   private paginatorLimit = 10;
   public isDataFetchedAll = false;
@@ -33,16 +34,21 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
-    this.messageText = new FormControl(this.getMessageText(this.selectedChannel.channelId));
-    this.messageText.valueChanges.pipe(
-      debounceTime(this.DEBOUNCE_TIME),
-      skip(1),
-      distinctUntilChanged()
-    ).subscribe(value => {
-      this.storeMessageText(this.selectedChannel.channelId, value);
+    forkJoin([this.fetchUsers(), this.fetchChannels()]).subscribe(res => {
+      this.users = res[0].data.getUsers;
+      this.selectedUser = this.users[0];
+      this.channels = res[1].data.getChannels;
+      this.selectedChannel = this.channels[0];
+      this.leaveAndJoinChannel();
+      this.messageText = new FormControl(this.getMessageText(this.selectedChannel.channelId));
+      this.messageText.valueChanges.pipe(
+        debounceTime(this.DEBOUNCE_TIME),
+        skip(1),
+        distinctUntilChanged()
+      ).subscribe(value => {
+        this.storeMessageText(this.selectedChannel.channelId, value);
+      });
     });
-    this.leaveAndJoinChannel();
-
   }
 
 
@@ -108,6 +114,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
         next: (res) => {
           let data = res.data.postMessage;
           data["status"] = "Send";
+          data["time"] = moment(data.createdAt).format('hh:mm');
           //Emit message to server
           this.socketService.socket.emit("chatMessage", data);
           // this.message = "";
@@ -117,7 +124,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
         error: (err) => {
           let data = {
             channelId: this.selectedChannel.channelId,
-            createdAt: moment().utc().format("YYYY-MM-DD HH:mm"),
+            createdAt: moment().format('hh:mm'),
             text: this.message,
             status: "Error",
             user: { _id: this.selectedUser._id, userName: this.selectedUser.userName, avatar: this.selectedUser.avatar }
@@ -143,6 +150,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   onMessageEnter(event) {
     console.log(event);
   }
+  //#region APIs
   fetchLatestMessages() {
     //config pageNumber 
     this.morePageNumber = 1;
@@ -170,7 +178,7 @@ query {
         dataArray.sort((a, b) => a._id - b._id);
         dataArray.forEach((message, idx) => {
           message["status"] = "Sent";
-          message["time"] = moment(data.createdAt).format('hh:mm');
+          message["time"] = moment().utc(message.createdAt).format('hh:mm');
           this.outputMessage(message);
         })
       },
@@ -189,7 +197,11 @@ query {
         _id,
         text,
         channelId,
-        user
+        user{
+          _id,
+          userName,
+          avatar
+        }
     }
   }
 `,
@@ -199,6 +211,8 @@ query {
         let dataArray = data.data.fetchMessages;
         if (dataArray != undefined && dataArray.length > 0) {
           dataArray.forEach((message, idx) => {
+            message["status"] = "Sent";
+            message["time"] = moment().utc(message.createdAt).format('hh:mm');
             if (isOld) {
               this.previouseMessage(message);
 
@@ -212,7 +226,36 @@ query {
       error: (err) => { throw err }
     })
   }
-
+  fetchUsers() {
+    //config pageNumber 
+    let body = JSON.stringify({
+      query: `
+              query {
+                getUsers {
+                      _id,
+                      userName,
+                      avatar
+                  }
+                }
+              `
+    });
+    return this.service.postBody(body);
+  }
+  fetchChannels() {
+    //config pageNumber 
+    let body = JSON.stringify({
+      query: `
+            query {
+              getChannels {
+                    channelId,
+                    channelName,
+                }
+              }
+           `
+    });
+    return this.service.postBody(body);
+  }
+  //#endregion
   keepScrollCurrentPosition() {
     this.chatsElement.scroll(0, this.chatsElement.scrollHeight - this.currentScrollHeight);
     this.currentScrollHeight = this.chatsElement.scrollHeight;
@@ -266,7 +309,7 @@ query {
                     </div>
                     <div class="chat-avatar">
                       <img src="../assets/img/${data.user.avatar}" alt="User" />
-                      <div class="chat-name">${data.user.userName}</div>
+                      <div class="chat-name"><b>${data.user.userName}</b></div>
                     </div>`;
     } else if (data.status = "Error") {
       div.innerHTML = `<div class="chat-info">

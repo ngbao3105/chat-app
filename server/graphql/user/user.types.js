@@ -7,7 +7,7 @@ const USER_TYPES = `
     avatar: String,
   }
   type Users {
-      users: [User],
+      users: [User]!,
       total: Float
   }
   input UserInput{

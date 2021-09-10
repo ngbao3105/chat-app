@@ -12,10 +12,8 @@ const getUsers = async () => {
   });
   await client.connect();
   const db = client.db(MONGODB_DB_NAME);
-  const result = await db.collection('users').find({}).toArray(function (err, result) {
-    if (err) throw err;
-  });
-  db.close();
+  const result = await db.collection('users').find({}).toArray();
+  client.close();
   return result;
 };
 const getUserById = async (args) => {
