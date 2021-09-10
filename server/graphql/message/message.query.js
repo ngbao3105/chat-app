@@ -1,8 +1,8 @@
-const getMessages = `getMessages:Messages`;
-const getMessagesByRoomId = `getMessagesByRoomId(roomId:String):Messages`
+const { paginatorFields } = require('../graphql.utils');
+
+const fetchMessages = `fetchMessages(channelId:String!,${paginatorFields}):[Message!]`
 const MESSAGE_QUERY = `
-    ${getMessages}
-    ${getMessagesByRoomId}
+    ${fetchMessages}
 `
 module.exports = {
     MESSAGE_QUERY

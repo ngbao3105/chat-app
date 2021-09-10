@@ -3,15 +3,10 @@
 const MESSAGE_TYPES = `
   type Message {
     _id:String,
-    chatRoomId: String!,
-    content: String!,
-    type:String,
-    createdBy:User!,
+    channelId: String!,
+    text: String!,
+    userId:String!,
     createdAt: String,
-  }
-  type Messages {
-      messages: [Message],
-      total: Float
   }
 `;
 

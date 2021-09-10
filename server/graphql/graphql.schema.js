@@ -9,9 +9,8 @@ const {
   MESSAGE_MUTATION
 } = require('./message/message.mutation');
 const {
-  getMessages,
-  getMessagesByRoomId,
-  deleteMessage
+  fetchMessages,
+  postMessage
 } = require('./message/message.resolver');
 const {
   USER_TYPES
@@ -24,15 +23,15 @@ const {
   getUserById
 } = require('./user/user.resolver');
 const {
-  ROOM_TYPES
-} = require('./room/room.types');
+  CHANNEL_TYPES
+} = require('./channel/channel.types');
 const {
-  ROOM_QUERY
-} = require('./room/room.query');
+  CHANNEL_QUERY
+} = require('./channel/channel.query');
 const {
-  getRooms,
-  getRoomById
-} = require('./room/room.resolver');
+  getChannels,
+  getChannelById
+} = require('./channel/channel.resolver');
 
 const {
   buildSchema
@@ -41,11 +40,11 @@ const {
 const schema = buildSchema(`
     ${MESSAGE_TYPES}
     ${USER_TYPES}
-    ${ROOM_TYPES}
+    ${CHANNEL_TYPES}
     type Query { 
         ${MESSAGE_QUERY}
         ${USER_QUERY}
-        ${ROOM_QUERY}
+        ${CHANNEL_QUERY}
     }
     type Mutation {
       ${MESSAGE_MUTATION}
@@ -67,39 +66,27 @@ const root = {
     return result;
   },
   //#endregion
-  //#region Room
-  getRooms: async () => {
-    const result = await getRooms();
+  //#region channel
+  getChannels: async () => {
+    const result = await getChannels();
     return result;
   },
-  getRoomById: async ({
+  getChannelById: async ({
     _id
   }) => {
-    const result = await getRoomById({
+    const result = await getChannelById({
       _id: _id
     });
     return result;
   },
   //#endregion
   //#region Message
-  getMessages: async () => {
-    const result = await getMessages();
+  fetchMessages: async (channelId) => {
+    const result = await fetchMessages(channelId);
     return result;
   },
-  getMessagesByRoomId: async ({
-    roomId
-  }) => {
-    const result = await getMessagesByRoomId({
-      roomId: roomId
-    });
-    return result;
-  },
-  deleteMessage: async ({
-    _id
-  }) => {
-    const result = await deleteMessage({
-      _id: _id
-    });
+  postMessage: async (args) => {
+    const result = await postMessage(args);
     return result;
   }
   //#endregion

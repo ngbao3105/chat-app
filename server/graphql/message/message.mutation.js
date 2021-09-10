@@ -1,6 +1,6 @@
-const deleteMessage = `deleteMessage(_id:String):Message`;
+const postMessage = `postMessage(channelId:String!,text:String!,userId:String!):Message`;
 const MESSAGE_MUTATION = `
-    ${deleteMessage}
+    ${postMessage}
 `
 module.exports = {
     MESSAGE_MUTATION

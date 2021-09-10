@@ -1,0 +1,183 @@
+$light-blue: #2791cf;
+$light-grey: #7e878c;
+$dark-grey: #3f3f3f;
+$white:#ffffff;
+
+$font-text: 'Poppins',
+sans-serif;
+$font-heading:"Ballo 2",
+cursive;
+$fsize: 16px;
+$borderRadius: 10px;
+
+@mixin flexing($fd, $jc, $ai) {
+  display: flex;
+  flex-direction: $fd;
+  align-items: $ai;
+  justify-content: $jc;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+.wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  // overflow: hidden;
+}
+
+.title {
+  background-color: $light-blue;
+  color: $white;
+  padding: 7px 20px;
+  // @include flexing(row, space-between, center);
+  font-size: 32px;
+  font-family: $font-heading;
+  // margin-left: 10px;
+  border-radius: $borderRadius $borderRadius 0px 0px;
+}
+
+.left-side-bar {
+  padding-left: 10px;
+}
+
+div.container {
+  background-color: $light-grey;
+  padding: 20px;
+  max-width: 100%;
+  border-radius: 0px 0px $borderRadius $borderRadius;
+  @include flexing(row, flex-start, stretch);
+
+  div.left-side-bar {
+    width: 350px;
+    color: $white;
+    background-color: $dark-grey;
+    border-radius: $borderRadius;
+    margin-right: 15px;
+
+    div.users-side-bar {
+      @include flexing(column, space-between, flex-start);
+      padding: 15px;
+    }
+
+    div.channels-side-bar {
+      margin-bottom: 15px;
+      padding: 15px 25px 15px 15px;
+    }
+
+    div.channels-list p {
+      font-size: $fsize;
+      padding: 10px;
+      font-weight: 500;
+      // margin-left: 5px;
+    }
+    div.channels-list p:hover{
+      cursor: pointer;
+      background-color: $light-grey;
+      border-radius: 5px;
+      width: 100%;
+    }
+
+  }
+
+  hr {
+    width: 90%;
+    margin: 0 15px;
+  }
+
+  div.chat-window {
+    width: 100%;
+    background-color: $dark-grey;
+    border-radius: $borderRadius;
+    color: $white;
+    padding: 15px;
+
+    div.chats {
+      min-height: 65vh;
+      padding: 20px;
+
+      div.user-join {
+        font-size: 0.9rem;
+        background-color: $white;
+        border-radius: 50px;
+        color: $dark-grey;
+        width: max-content;
+        padding: 7px 20px;
+        margin: 0 auto;
+        margin-bottom: 15px;
+        ;
+      }
+
+      div.message {
+        color: $dark-grey;
+        background-color: $white;
+        padding: 5px 15px;
+        max-width: 400px;
+        margin-bottom: 15px;
+        border-radius: 10px 50px 50px 10px;
+
+        p {
+          font-size: $fsize;
+        }
+      }
+
+      div.outgoing {
+        margin-left: auto;
+        color: $white;
+        background-color: $light-blue;
+        border-radius: 50px 10px 10px 50px;
+        text-align: right;
+      }
+
+      div.user-input {
+        @include flexing(row, space-between, stretch);
+        padding: 20px;
+        input {
+          font-size: 16px !important;
+          background-color:$white !important;
+          padding: 10px 20px !important;
+          outline: none !important;
+          border: none !important;
+          width: 95% !important;
+          border-radius: 50px 0 0 50px !important;
+        }
+
+        button {
+          font-size: 17px !important;
+          padding: 10px 20px !important;
+          border: none !important;
+          outline: none !important;
+          width: 5% !important;
+          color: $white !important;
+          background-color: $light-blue !important;
+          border-radius: 0 50px 50px 0 ;
+        }
+      }
+    }
+  }
+}
+
+.active{
+  background-color: $light-grey;
+  border-radius: 5px;
+  width: 100%;
+}
+.disactive{
+  background-color:$dark-grey;
+  border-radius: 5px;
+  width: 100%;
+}
+
+// < 900px
+@media screen and (max-width: 900px) {
+  wrapper {
+    width: 95%;
+  }
+}

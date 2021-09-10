@@ -5,41 +5,45 @@ const {
   MONGODB_DB_NAME,
   OBJECT_ID
 } = require('../settings/mongodb.settings');
+const {
+  formatMessage
+} = require("../utils/utils");
+const {
+  userJoin,
+  getCurrentUser
+} = require("../utils/users");
+const botName = "Chat Bot";
+
 const registerSocketServerEventHandlers = (socketServer) => {
+  let users = [];
+  let channels = [];
   socketServer.on("connection", (socket) => {
     socket.on('joinRoom', ({
       userName,
-      room
+      channelName
     }) => {
-      socket.join(room);
-      socket.emit("message", "hi there!");
-    })
+      const user = userJoin(socket.id, userName, channelName);
+      users[socket.id] = userName;
+      channels[socket.id] = channelName;
+      socket.join(user.channelName);
 
+      socket.emit("admin-message", formatMessage(botName, `Welcome <b>${user.userName}</b> to ${user.channelName}`));
+
+      //Boardcast when a user connects
+      socket.broadcast.to(user.channelName).emit("admin-message", formatMessage(botName, `<b>${user.userName}</b> has joined the channel`))
+
+
+    })
     socket.on("chatMessage", async (data) => {
-      /** 
-       *   chatRoomId: String!,
-       *   content: String!,
-       *   createdBy: User!,
-       *   createdAt: String!,
-       */
       try {
-        // const client = new MONGODB_CLIENT(MONGODB_URI, {
-        //   ...MONGODB_CLIENT_OPTIONS
-        // });
-        // await client.connect();
-        // const db = client.db(MONGODB_DB_NAME);
-        // const result = await db.collection('messages').insertOne(data);
-        // client.close();
-        // socket.emit("message", result);
-        console.log(data);
-        socketServer.emit("message", data)
+        socketServer.emit("message", formatMessage(users[socket.id], data))
       } catch (error) {
-        socketServer.emit("message", 400);
+        socket.emit("message", 400);
       };
     })
-
-    socket.on("disconnect", (userName) => {
-      socketServer.emit("message", `${userName} left`);
+    //Notify to room 
+    socket.on("disconnect", () => {
+      socket.broadcast.to(channels[socket.id]).emit("admin-message", formatMessage(botName, `${users[socket.id]} has left`));
     })
 
   })

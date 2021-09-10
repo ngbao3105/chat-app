@@ -6,7 +6,7 @@ const {
     OBJECT_ID
   } = require('../../settings/mongodb.settings');
   
-  const getRooms = async () => {
+  const getChannels = async () => {
     const client = new MONGODB_CLIENT(MONGODB_URI, {
       ...MONGODB_CLIENT_OPTIONS
     });
@@ -18,7 +18,7 @@ const {
     db.close();
     return result;
   };
-  const getRoomById = async (args) => {
+  const getChannelById = async (args) => {
     let filter = {
       ...args
     };
@@ -42,7 +42,7 @@ const {
   };
   
   module.exports = {
-    getRooms,
-    getRoomById
+    getChannels,
+    getChannelById
   }
   

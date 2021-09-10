@@ -1,42 +1,82 @@
-<div class="chat-container">
-    <header class="chat-header">
-      <h1><i class="fas fa-smile"></i>Chat App</h1>
-      <a href="index.html" class="btn">Leave Channel</a>
-    </header>
-    <main class="chat-main">
-      <div class="chat-sidebar">
-        <h3><i class="fas fa-users"></i> Users</h3>
-        <ul id="users">
-          <li>Joyse</li>
-          <li>Sam</li>
-          <li>Russel</li>
-        </ul>
-        <h3><i class="fas fa-comments"></i> Room Channel:</h3>
-        <h2 (click)="roomClick('general')" id="room-name">General Channel</h2>
-        <h2 (click)="roomClick('technology')" id="room-name">Technology Channel</h2>
-        <h2 id="room-name">LGMT Channel</h2>
-      </div>
-      <div class="chat-messages">
-        <div class="message">
-          <p class="meta">Russel <span>9:12pm</span></p>
-          <p class="text">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi,
-            repudiandae.
-          </p>
-        </div>
-        <div class="message">
-          <p class="meta">Sam <span>9:15pm</span></p>
-          <p class="text">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi,
-            repudiandae.
-          </p>
-        </div>
-      </div>
-    </main>
-    <div class="chat-form-container">
-      <form id="chat-form">
-        <input id="msg" type="text" placeholder="Enter Message" required autocomplete="off" />
-        <button class="btn" (click)="submitMessage($event)"><i class="fas fa-paper-plane"></i> Send</button>
-      </form>
-    </div>
+<div class="wrapper">
+  <div class="title">
+    <h1>Chat App</h1>
   </div>
+  <div class="container">
+    <div class="left-side-bar">
+      <div class="users-side-bar">
+        <h5 style="margin-bottom: 10px">1. Choose a user</h5>
+        <select class="form-select" (change)="onUserChange($event)">
+          <ng-container *ngFor="let user of users">
+            <option [value]="user.userId" [selected]="selectedUser.userId == user.userId ? true : false">{{ user.userName }}</option>
+          </ng-container>
+        </select>
+      </div>
+      <hr />
+      <div class="channels-side-bar">
+        <h5>2. Choose your Channel</h5>
+        <div class="channels-list">
+          <ng-container *ngFor="let channel of channels">
+            <p
+              (click)="selectChannel(channel)"
+              [ngClass]="
+                channel.channelId == selectedChannel.channelId ? 'active' : 'disactive'
+              "
+            >
+              {{ channel.channelName }}
+            </p>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-window">
+      <div class="chats">
+        <!-- <div class="user-join">
+          <p>Joyse joined the channel</p>
+        </div> -->
+        <!-- <div class="message incoming">
+          <h5>Russel</h5>
+          <p>Hello guys</p>
+        </div>
+        <div class="message outgoing">
+          <h5>Sam</h5>
+          <p>Hello guys</p>
+        </div> -->
+      </div>
+      <div class="user-input">
+        <input
+          style="
+            font-size: 16px;
+            background-color: #ffffff;
+            padding: 10px 20px;
+            outline: none;
+            border: none;
+            width: 95%;
+            border-radius: 50px 0 0 50px;
+          "
+          [(ngModel)] = "message"
+          type="text"
+          placeholder="Type your message..."
+        />
+        <button
+          class="btn"
+          (click)="sendMessage($event)"
+          style="
+            font-size: 17px;
+            padding: 10px 20px;
+            border: none;
+            outline: none;
+            width: 5%;
+            color: #ffffff;
+            background-color: #2791cf;
+            border-radius: 0 50px 50px 0;
+          "
+        >
+          <i class="fas fa-paper-plane" style="color: white"></i>
+        </button>
+      </div>
+    </div>
+    <!-- <app-chat-window></app-chat-window> -->
+  </div>
+</div>
