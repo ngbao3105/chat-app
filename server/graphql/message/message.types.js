@@ -5,8 +5,13 @@ const MESSAGE_TYPES = `
     _id:String,
     channelId: String!,
     text: String!,
-    userId:String!,
-    createdAt: String,
+    user:User!,
+    createdAt: String!,
+  }
+  input MessageInput{
+    channelId:String!,
+    text:String!,
+    user:UserInput
   }
 `;
 

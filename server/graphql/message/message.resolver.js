@@ -6,6 +6,7 @@ const {
   NUMBER_PER_PAGE,
   OBJECT_ID
 } = require('../../settings/mongodb.settings');
+const moment = require('moment');
 // const fetchMoreMessages = async (args) => {
 //   let filter = {
 //     channelId: args.channelId
@@ -40,7 +41,7 @@ const fetchMessages = async (args) => {
 const postMessage = async ({
   channelId,
   text,
-  userId
+  user
 }) => {
   try {
     const client = new MONGODB_CLIENT(MONGODB_URI, {
@@ -52,20 +53,14 @@ const postMessage = async ({
     let body = {
       channelId: channelId,
       text: text,
-      userId: userId,
+      user: user,
+      createdAt: moment().utc().format("YYYY-MM-DD HH:mm"),
       _id: _id
     };
-    await db.collection('messages').insertOne(body, (err, res) => {
-      if (err) throw err;
-      client.close();
-    });
-    const result = await db.collection('messages').find({
-      _id: _id
-    }).toArray();
-    client.close();
-    return result[0]
+    const result = await db.collection('messages').insertOne(body);
+    return result.ops[0];
   } catch (error) {
-    return 400;
+    return error;
   };
 };
 

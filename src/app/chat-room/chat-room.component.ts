@@ -4,6 +4,8 @@ import * as moment from 'moment';
 import { FormControl } from '@angular/forms';
 import { Users, Channels } from "../dataJson";
 import { ChatServiceService } from '../chat-service.service';
+import { SharedPropertyService } from './shared/shared-property.service';
+import { takeUntil, debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 declare let jQuery: any;
 @Component({
   selector: 'app-chat-room',
@@ -13,44 +15,62 @@ declare let jQuery: any;
 })
 export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild("chats", { static: true }) chats: ElementRef<HTMLDivElement>;
-
+  private DEBOUNCE_TIME = 500;
   statusDefault: boolean;
-  socket;
-
+  currentScrollHeight = 0;
+  chatsElement: HTMLElement;
+  public messageText: FormControl;
   public channels = Channels;
   public message = "";
   public users = Users;
   public selectedUser = this.users[0];
   public selectedChannel = this.channels[0];
-  private morePageNumber = 0;
+  private morePageNumber = 1;
   private paginatorLimit = 10;
   public isDataFetchedAll = false;
   panelColor: FormControl;
-  constructor(private socketService: SocketioService, private renderer: Renderer2, private service: ChatServiceService,) {
+  constructor(private socketService: SocketioService, private renderer: Renderer2, private service: ChatServiceService, private shardProperty: SharedPropertyService) {
   }
 
   ngOnInit(): void {
+    this.messageText = new FormControl(this.getMessageText(this.selectedChannel.channelId));
+    this.messageText.valueChanges.pipe(
+      debounceTime(this.DEBOUNCE_TIME),
+      skip(1),
+      distinctUntilChanged()
+    ).subscribe(value => {
+      this.storeMessageText(this.selectedChannel.channelId, value);
+    });
     this.leaveAndJoinChannel();
 
   }
+
+
   selectChannel(channel) {
-    this.selectedChannel = channel;
+    if (this.selectedChannel.channelId != channel.channelId) {
+      this.selectedChannel = channel;
+      this.resetProperty();
+    }
+  }
+
+  resetProperty() {
     this.leaveAndJoinChannel();
     this.renderer.setProperty(this.chats.nativeElement, 'innerHTML', "");
     this.insertReadMoreButton();
-    // this.socketService.socket.emit("joinRoom", this.roomName);
+    this.messageText.setValue(this.getMessageText(this.selectedChannel.channelId));
+    this.currentScrollHeight = 0;
   }
 
+
   leaveAndJoinChannel() {
-    if (this.socketService.socket !== undefined) {
-      this.socketService.socket.disconnect();
-    }
+    this.socketService.disconnect();
     this.socketService.setupSocketConnection();
     if (this.socketService.socket !== undefined) {
       this.socketService.socket.emit('joinRoom', { user: this.selectedUser, channel: this.selectedChannel });
       //Message from server
       this.socketService.socket.on("message", (data) => {
         if (data != 400) {
+          //reverse the array before append child bec
           this.outputMessage(data);
         }
       })
@@ -69,49 +89,88 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.message != "") {
       let body = JSON.stringify({
         query: `
-      mutation CreateingMessage{
-        postMessage(channelId: \"${this.selectedChannel.channelId}\", text:\"${this.message}\", userId:\"${this.selectedUser.userId}\") {
+      mutation CreatingMessage{
+        postMessage(channelId: \"${this.selectedChannel.channelId}\", text:\"${this.message}\", user:{_id:\"${this.selectedUser._id}\", userName: \"${this.selectedUser.userName}\", avatar: \"${this.selectedUser.avatar}\"}) {
+        _id,
+        text,
+        channelId,
+        createdAt,
+        user {
           _id,
-          text,
-          channelId,
-          userId
+          userName,
+          avatar
       }
     }
+  }
     `,
       });
       this.service.postBody(body).pipe().subscribe({
-        next: () => {
+        next: (res) => {
+          let data = res.data.postMessage;
+          data["status"] = "Send";
           //Emit message to server
-          this.socketService.socket.emit("chatMessage", this.message);
-          this.message = "";
+          this.socketService.socket.emit("chatMessage", data);
+          // this.message = "";
+          this.messageText.setValue("");
+          this.storeMessageText(this.selectedChannel.channelId, "");
         },
-        error: (err) => { throw err }
+        error: (err) => {
+          let data = {
+            channelId: this.selectedChannel.channelId,
+            createdAt: moment().utc().format("YYYY-MM-DD HH:mm"),
+            text: this.message,
+            status: "Error",
+            user: { _id: this.selectedUser._id, userName: this.selectedUser.userName, avatar: this.selectedUser.avatar }
+          };
+          this.socketService.socket.emit("chatMessage", data);
+          throw err;
+        }
       })
     }
+  }
+
+  storeMessageText(channelId, value) {
+    localStorage.setItem(channelId, value);
+  }
+
+  getMessageText(channelId) {
+    let textStoredValue = localStorage.getItem(channelId);
+    if (textStoredValue != null) {
+      return textStoredValue;
+    }
+    return "";
   }
   onMessageEnter(event) {
     console.log(event);
   }
   fetchLatestMessages() {
     //config pageNumber 
+    this.morePageNumber = 1;
     let paginatorSkip = 0;
     let body = JSON.stringify({
       query: `
-    query {
-      fetchMessages(channelId: \"${this.selectedChannel.channelId}\",paginatorSkip: ${paginatorSkip},paginatorLimit:${this.paginatorLimit}) {
+query {
+  fetchMessages(channelId: \"${this.selectedChannel.channelId}\",paginatorSkip: ${paginatorSkip},paginatorLimit:${this.paginatorLimit}) {
         _id,
-        text,
-        channelId,
-        userId
+      text,
+      channelId,
+      createdAt,
+      user{
+        _id,
+        userName,
+        avatar
+      }
     }
   }
-  `,
+`,
     });
     this.service.postBody(body).subscribe({
       next: (data) => {
         let dataArray = data.data.fetchMessages;
+        dataArray.sort((a, b) => a._id - b._id);
         dataArray.forEach((message, idx) => {
-          message["userName"] = message.userId;
+          message["status"] = "Sent";
+          message["time"] = moment(data.createdAt).format('hh:mm');
           this.outputMessage(message);
         })
       },
@@ -125,26 +184,27 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
     let paginatorSkip = this.morePageNumber > 0 ? ((this.morePageNumber - 1) * this.paginatorLimit) : 0
     let body = JSON.stringify({
       query: `
-    query {
-      fetchMessages(channelId: \"${this.selectedChannel.channelId}\",paginatorSkip: ${paginatorSkip},paginatorLimit:${this.paginatorLimit}) {
+query {
+  fetchMessages(channelId: \"${this.selectedChannel.channelId}\",paginatorSkip: ${paginatorSkip},paginatorLimit:${this.paginatorLimit}) {
         _id,
         text,
         channelId,
-        userId
+        user
     }
   }
-  `,
+`,
     });
     this.service.postBody(body).subscribe({
       next: (data) => {
         let dataArray = data.data.fetchMessages;
         if (dataArray != undefined && dataArray.length > 0) {
           dataArray.forEach((message, idx) => {
-            message["userName"] = message.userId;
             if (isOld) {
               this.previouseMessage(message);
+
             }
           })
+          this.keepScrollCurrentPosition();
         } else if (dataArray == undefined && data.data.length == 0) {
           this.isDataFetchedAll = true;
         }
@@ -153,54 +213,106 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
     })
   }
 
-  //#region utils
-  outputMessage(message) {
-    if (message.text !== "") {
-      const div = document.createElement("div");
+  keepScrollCurrentPosition() {
+    this.chatsElement.scroll(0, this.chatsElement.scrollHeight - this.currentScrollHeight);
+    this.currentScrollHeight = this.chatsElement.scrollHeight;
+  }
 
-      div.innerHTML = ` <h5><b>${message.userName}</b></h5>
-                        <p>${message.text}</p>
-                        `;
-      //Scroll down when new message submitted
+  //#region utils
+  outputMessage(data) {
+    if (data.text !== "") {
       const chatMessages = document.querySelector(".chats");
-      if (message.userName == this.selectedUser.userName) {
-        div.classList.add("message", "outgoing");
-      } else {
-        div.classList.add("message", "incoming");
+      if (data.user.userName == this.selectedUser.userName) {
+        let div = this.outgoingMessage(data);
+        chatMessages.appendChild(div);
       }
-      chatMessages.appendChild(div);
+      else {
+        let div = this.incomingMessage(data);
+        chatMessages.appendChild(div);
+      }
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
   };
 
-  previouseMessage(message) {
-    if (message.text !== "") {
+  incomingMessage(data) {
+    const div = document.createElement("div");
+    div.innerHTML = `<div class="chat-avatar">
+                      <img src="../assets/img/${data.user.avatar}" alt = "User" />
+                      <div class="chat-name"> <b>${data.user.userName}</b></div>
+                        </div>
+                      <div class="chat-info">
+                        <div class="chat-text">
+                          ${data.text}
+                      </div>
+                      <div class="chat-hour" >${data.time} </div>
+                    </div>
+                                  `;
+    div.classList.add("message", "incoming");
+    return div;
+  }
+
+  outgoingMessage(data) {
+    const div = document.createElement("div");
+    if (data.status = "Send") {
+      div.innerHTML = `<div class="chat-info">
+                      <div class="chat-text">
+                        ${data.text}
+                      </div>
+                      <div class="chat-hour">
+                        ${data.time}
+                        <span class="fa fa-check-circle" style="margin-left: 5px"></span>
+                        <span style="margin: 5px" class="chat-message">${data.status}</span>
+                      </div>
+                    </div>
+                    <div class="chat-avatar">
+                      <img src="../assets/img/${data.user.avatar}" alt="User" />
+                      <div class="chat-name">${data.user.userName}</div>
+                    </div>`;
+    } else if (data.status = "Error") {
+      div.innerHTML = `<div class="chat-info">
+      <div class="chat-text">
+        ${data.text}
+      </div>
+      <div class="chat-hour">
+        ${data.time}
+        <span class="fa fa-exclamation-circle" style="margin-left: 5px"></span>
+        <span style="margin: 5px" class="chat-message">${data.status}</span>
+      </div>
+    </div>
+    <div class="chat-avatar">
+      <img src="../assets/img/${data.user.avatar}" alt="User" />
+      <div class="chat-name">${data.user.userName}</div>
+    </div>`;
+    }
+    div.classList.add("message", "outgoing");
+    return div;
+  }
+  previouseMessage(data) {
+    if (data.text !== "") {
       const div = document.createElement("div");
 
-      div.innerHTML = ` <h5><b>${message.userName}</b></h5>
-                        <p>${message.text}</p>
-                        `;
-      //Scroll down when new message submitted
+      div.innerHTML = ` <h5> <b>${data.user.userName} </b></h5>
+  <p>${data.text} </p>
+    `;
       const readMoreBtn = document.querySelector(".btn-readMore");
-      if (message.userName == this.selectedUser.userName) {
-        div.classList.add("message", "outgoing");
-      } else {
-        div.classList.add("message", "incoming");
+      if (data.user.userName == this.selectedUser.userName) {
+        let div = this.outgoingMessage(data);
+        jQuery(div).insertAfter(readMoreBtn);
       }
-      jQuery(div).insertAfter(readMoreBtn);
-      // chatMessages.scrollTop = chatMessages.scrollHeight;
+      else {
+        let div = this.incomingMessage(data);
+        jQuery(div).insertAfter(readMoreBtn);
+      }
     }
   }
 
   formatAdminMessage(message) {
-    if (message.text !== "") {
+    if (message !== "") {
       const div = document.createElement("div");
-      div.innerHTML = `<p><b>${message.text}</p>`;
-      //Scroll down when new message submitted
+      div.innerHTML = `<p> <b>${message} </p>`;
       const chatMessages = document.querySelector(".chats");
       div.classList.add("user-join");
-      jQuery(div).insertAfter(chatMessages.firstChild);
-      // chatMessages.scrollTop = chatMessages.scrollHeight;
+      jQuery(div).insertAfter(chatMessages.lastChild);
     }
   };
 
@@ -215,10 +327,10 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   //#endregion
   onUserChange(event) {
     let selectedUserId = event.target.value;
-    this.selectedUser = (this.users.filter(item => item.userId == selectedUserId))[0];
-    this.leaveAndJoinChannel();
-    this.renderer.setProperty(this.chats.nativeElement, 'innerHTML', "");
-    this.insertReadMoreButton();
+    if (this.selectedUser._id != selectedUserId) {
+      this.selectedUser = (this.users.filter(item => item._id == selectedUserId))[0];
+      this.resetProperty();
+    }
   }
 
   registerEventDelegation() {
@@ -232,6 +344,8 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   }
   ngAfterViewInit(): void {
     this.registerEventDelegation();
+    this.chatsElement = document.querySelector(".chats");
+    this.currentScrollHeight = this.chatsElement.scrollHeight;
   }
 
 

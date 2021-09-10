@@ -6,41 +6,37 @@ const {
   OBJECT_ID
 } = require('../settings/mongodb.settings');
 const {
-  formatMessage
+  formatData
 } = require("../utils/utils");
 const {
   userJoin,
   getUser
 } = require("../utils/users");
-const botName = "Chat Bot";
 let currentUser = {};
-let currentChannel = {};
+let currentChannel = [];
 const registerSocketServerEventHandlers = (socketServer) => {
   socketServer.on("connection", (socket) => {
     socket.on('joinRoom', ({
       user,
       channel
     }) => {
-      currentChannel = channel;
-      socket.join(currentChannel.channelId);
-      currentUser = getUser(user.userId);
+      currentChannel[socket.id] = channel;
+      socket.join(currentChannel[socket.id].channelName);
+      currentUser = getUser(user._id);
       if (currentUser == undefined || currentUser == null || currentUser == {}) {
         currentUser = userJoin(user);
-        socket.emit("admin-message", formatMessage(botName, `Welcome <b>${currentUser.userName}</b> to ${currentChannel.channelId}`));
+        socket.broadcast.emit("admin-message",`Welcome <b>${currentUser.userName}</b> to ${currentChannel[socket.id].channelName}`);
         //Boardcast when a user connects
       }
-      socket.broadcast.to(currentChannel.channelId).emit("admin-message", formatMessage(botName, `<b>${currentUser.userName}</b> has joined the channel`))
+      socket.to(currentChannel[socket.id].channelName).emit("admin-message", `<b>${currentUser.userName}</b> has joined the channel`);
     })
-    socket.on("chatMessage", async (data) => {
-      try {
-        socketServer.emit("message", formatMessage(currentUser.userName, data))
-      } catch (error) {
-        socket.emit("message", 400);
-      };
+    socket.on("chatMessage", (data) => {
+      socketServer.to(currentChannel[socket.id].channelName).emit("message", formatData(data))
     })
     //Notify to room 
     socket.on("disconnect", () => {
-      socket.broadcast.to(currentChannel.channelId).emit("admin-message", formatMessage(botName, `${currentUser.userName} has left`));
+      console.log(socketServer);
+      socketServer.to(currentChannel[socket.id].channelName).emit("admin-message", `${currentUser.userName} has left`);
     })
 
   })

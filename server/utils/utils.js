@@ -1,13 +1,12 @@
 const moment = require('moment');
 
-const formatMessage = (userName, text) =>{
+const formatData = (data) =>{
     return {
-      userName,
-      text,
-      time: moment().format('hh:mm')
+     ...data,
+      time: moment(data.createdAt).format('hh:mm')
     }
   }
 
 module.exports = {
-    formatMessage
+  formatData
 }

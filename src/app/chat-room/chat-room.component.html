@@ -1,6 +1,8 @@
 <div class="wrapper">
   <div class="title">
-    <h1>One Day Chat App <i>(All messages will be deleted at every 00:00 UTC)</i></h1>
+    <h1>
+      One Day Chat App <i>(All messages will be deleted at every 00:00 UTC)</i>
+    </h1>
   </div>
   <div class="container">
     <div class="left-side-bar">
@@ -9,8 +11,8 @@
         <select class="form-select" (change)="onUserChange($event)">
           <ng-container *ngFor="let user of users">
             <option
-              [value]="user.userId"
-              [selected]="selectedUser.userId == user.userId ? true : false"
+              [value]="user._id"
+              [selected]="selectedUser._id == user._id ? true : false"
             >
               {{ user.userName }}
             </option>
@@ -39,9 +41,42 @@
 
     <div class="chat-window">
       <div class="chats" #chats>
-          <button type="button" class="btn btn-info btn-readMore">
-            Read More <i class="fa fa-arrow-up"></i>
-          </button>
+        <button type="button" class="btn btn-info btn-readMore">
+          Read More <i class="fa fa-arrow-up"></i>
+        </button>
+        <!-- incoming message -->
+        <!-- <div class="message incoming">
+          <div class="chat-avatar">
+            <img src="../assets/img/Russell.png" alt="User" />
+            <div class="chat-name"><b>Russell</b></div>
+          </div>
+          <div class="chat-info">
+            <div class="chat-text">
+              Hello, I'm Russell. <br />How can I help you today?
+            </div>
+            <div class="chat-hour">08:55</div>
+          </div>
+        </div> -->
+        <!-- --------- -->
+        <!-- outgoing message -->
+        <!-- <div class="message outgoing">
+          <div class="chat-info">
+            <div class="chat-text">
+              Hi, Russell <br />
+              I need more information about Developer Plan.
+            </div>
+            <div class="chat-hour">
+              08:56
+              <span class="fa fa-check-circle" style="margin-left: 5px"></span>
+              <span style="margin: 5px" class="chat-message">Sent</span>
+            </div>
+          </div>
+          <div class="chat-avatar">
+            <img src="../assets/img/Joyse.png" alt="User" />
+            <div class="chat-name">Joyse</div>
+          </div>
+        </div> -->
+        <!-- --------- -->
       </div>
       <div class="user-input">
         <input
@@ -55,6 +90,7 @@
             width: 80%;
             border-radius: 10px 0 0 10px;
           "
+          [formControl]="messageText"
           [(ngModel)]="message"
           (keydown.enter)="sendMessage($event)"
           type="text"
@@ -78,6 +114,5 @@
         </button>
       </div>
     </div>
-    <!-- <app-chat-window></app-chat-window> -->
   </div>
 </div>

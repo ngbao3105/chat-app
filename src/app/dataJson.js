@@ -1,7 +1,7 @@
 const Users = [
-    {"userId": "Joyse","userName":"Joyse","avatar":""},
-    {"userId": "Russel","userName":"Russel","avatar":""},
-    {"userId": "Sam","userName":"Sam","avatar":""}
+    {"_id": "Joyse","userName":"Joyse","avatar":"Joyse.png"},
+    {"_id": "Russell","userName":"Russell","avatar":"Russell.png"},
+    {"_id": "Sam","userName":"Sam","avatar":"Sam.png"}
 ];
 const Channels = [
     {"channelId": "1","channelName":"General Channel"},

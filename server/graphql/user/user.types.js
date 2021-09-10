@@ -10,6 +10,11 @@ const USER_TYPES = `
       users: [User],
       total: Float
   }
+  input UserInput{
+    _id:String!,
+    userName: String!,
+    avatar: String!,
+  }
 `;
 
 module.exports = {
