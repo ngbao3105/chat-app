@@ -4,7 +4,7 @@ import * as moment from 'moment';
 import { FormControl } from '@angular/forms';
 import { Users, Channels } from "../dataJson";
 import { ChatServiceService } from '../chat-service.service';
-import { SharedPropertyService } from './shared/shared-property.service';
+import { SharedPropertyService } from '../shared/shared-property.service';
 import { takeUntil, debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { forkJoin } from 'rxjs';
 declare let jQuery: any;
@@ -29,12 +29,14 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   private morePageNumber = 1;
   private paginatorLimit = 10;
   public isDataFetchedAll = false;
+  public isLoading = true;
   panelColor: FormControl;
   constructor(private socketService: SocketioService, private renderer: Renderer2, private service: ChatServiceService, private shardProperty: SharedPropertyService) {
   }
 
   ngOnInit(): void {
     forkJoin([this.fetchUsers(), this.fetchChannels()]).subscribe(res => {
+      this.isLoading = false;
       this.users = res[0].data.getUsers;
       this.selectedUser = this.users[0];
       this.channels = res[1].data.getChannels;
@@ -53,6 +55,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
   selectChannel(channel) {
+
     if (this.selectedChannel.channelId != channel.channelId) {
       this.selectedChannel = channel;
       this.resetProperty();
@@ -92,6 +95,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
 
   sendMessage(event) {
     event.preventDefault();
+    this.isLoading = true;
     if (this.message != "") {
       let body = JSON.stringify({
         query: `
@@ -112,6 +116,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
       });
       this.service.postBody(body).pipe().subscribe({
         next: (res) => {
+          this.isLoading = false;
           let data = res.data.postMessage;
           data["status"] = "Send";
           data["time"] = moment(data.createdAt).format('hh:mm');
@@ -152,6 +157,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   }
   //#region APIs
   fetchLatestMessages() {
+    this.isLoading = true;
     //config pageNumber 
     this.morePageNumber = 1;
     let paginatorSkip = 0;
@@ -174,19 +180,25 @@ query {
     });
     this.service.postBody(body).subscribe({
       next: (data) => {
+        this.isLoading = false;
         let dataArray = data.data.fetchMessages;
         dataArray.sort((a, b) => a._id - b._id);
         dataArray.forEach((message, idx) => {
           message["status"] = "Sent";
-          message["time"] = moment().utc(message.createdAt).format('hh:mm');
+          message["time"] = moment(message.createdAt).format('hh:mm');
           this.outputMessage(message);
         })
       },
-      error: (err) => { throw err }
+      error: (err) => {
+        this.isLoading = false;
+        throw err;
+      }
+
     })
   }
 
   fetchMoreMessages(isOld = true) {
+    this.isLoading = true;
     //config pageNumber 
     isOld ? this.morePageNumber = this.morePageNumber + 1 : this.morePageNumber = this.morePageNumber - 1;
     let paginatorSkip = this.morePageNumber > 0 ? ((this.morePageNumber - 1) * this.paginatorLimit) : 0
@@ -208,11 +220,12 @@ query {
     });
     this.service.postBody(body).subscribe({
       next: (data) => {
+        this.isLoading = false;
         let dataArray = data.data.fetchMessages;
         if (dataArray != undefined && dataArray.length > 0) {
           dataArray.forEach((message, idx) => {
             message["status"] = "Sent";
-            message["time"] = moment().utc(message.createdAt).format('hh:mm');
+            message["time"] = moment(message.createdAt).format('hh:mm');
             if (isOld) {
               this.previouseMessage(message);
 
@@ -223,7 +236,10 @@ query {
           this.isDataFetchedAll = true;
         }
       },
-      error: (err) => { throw err }
+      error: (err) => {
+        this.isLoading = false;
+        throw err;
+      }
     })
   }
   fetchUsers() {
