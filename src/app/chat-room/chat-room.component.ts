@@ -15,20 +15,20 @@ declare let jQuery: any;
 })
 export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild("chats", { static: true }) chats: ElementRef<HTMLDivElement>;
-  private DEBOUNCE_TIME = 500;
+  DEBOUNCE_TIME = 500;
   isScrollTop = false;
   oldScrollHeight = 0;
   chatsElement: HTMLElement;
-  public messageText: FormControl;
-  public message = "";
-  public channels: any;
-  public users: any;
-  public selectedUser: any;
-  public selectedChannel: any;
-  private morePageNumber = 1;
-  private paginatorLimit = 10;
-  public isDataFetchedAll = false;
-  public isLoading = true;
+  messageText: FormControl;
+  message = "";
+  channels: any;
+  users: any;
+  selectedUser: any;
+  selectedChannel: any;
+  morePageNumber = 1;
+  paginatorLimit = 10;
+  isDataFetchedAll = false;
+  isLoading = true;
   panelColor: FormControl;
   constructor(private socketService: SocketioService, private renderer: Renderer2, private service: ChatServiceService, private sharedProperty: SharedPropertyService) {
   }
@@ -49,12 +49,27 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
       ).subscribe(value => {
         this.storeMessageText(this.selectedChannel.channelId, value);
       });
-    },error => {
+    }, error => {
       this.isLoading = false;
       throw error;
     });
   }
 
+  ngAfterViewInit(): void {
+    this.chatsElement = document.querySelector(".chats");
+    this.oldScrollHeight = this.chatsElement.scrollHeight;
+    this.registerEventListers();
+  }
+
+  registerEventListers(){
+    this.chatsElement.addEventListener("scroll", (event) => {
+      this.oldScrollHeight = this.chatsElement.scrollHeight;
+      this.isScrollTop = false;
+      if (this.chatsElement.scrollTop == 0) {
+        this.isScrollTop = true;
+      }
+    })
+  }
 
   selectChannel(channel) {
     if (this.selectedChannel.channelId != channel.channelId) {
@@ -87,7 +102,22 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
       this.socketService.socket.on("admin-message", (data) => {
         this.formatAdminMessage(data);
       })
-      this.fetchLatestMessages();
+      this.fetchLatestMessages().pipe().subscribe(
+        (data) => {
+          this.isLoading = false;
+          let dataArray = [...data.data.fetchMessages];
+          dataArray.sort((a, b) => a._id - b._id);
+          dataArray.forEach((message, idx) => {
+            message["status"] = "Sent";
+            message["time"] = moment(message.createdAt).format('hh:mm');
+            this.outputMessage(message);
+          })
+        },
+        (err) => {
+          this.isLoading = false;
+          throw err;
+        }
+      );
     }
 
   }
@@ -95,11 +125,11 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   sendMessage(event) {
     event.preventDefault();
     this.isLoading = true;
-    if (this.message != "") {
+    if (this.messageText.value != "") {
       let body = JSON.stringify({
         query: `
       mutation CreatingMessage{
-        postMessage(channelId: \"${this.selectedChannel.channelId}\", text:\"${this.message}\", user:{_id:\"${this.selectedUser._id}\", userName: \"${this.selectedUser.userName}\", avatar: \"${this.selectedUser.avatar}\"}) {
+        postMessage(channelId: \"${this.selectedChannel.channelId}\", text:\"${this.messageText.value}\", user:{_id:\"${this.selectedUser._id}\", userName: \"${this.selectedUser.userName}\", avatar: \"${this.selectedUser.avatar}\"}) {
         _id,
         text,
         channelId,
@@ -129,11 +159,13 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
           let data = {
             channelId: this.selectedChannel.channelId,
             createdAt: moment().format('hh:mm'),
-            text: this.message,
+            text: this.messageText.value,
             status: "Error",
             user: { _id: this.selectedUser._id, userName: this.selectedUser.userName, avatar: this.selectedUser.avatar }
           };
           this.socketService.socket.emit("chatMessage", data);
+          this.messageText.setValue("");
+          this.storeMessageText(this.selectedChannel.channelId, "");
           throw err;
         }
       })
@@ -151,8 +183,38 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     return "";
   }
-  onMessageEnter(event) {
-    console.log(event);
+
+  readMoreMessage(isOld) {
+    this.fetchMoreMessages(isOld).pipe().subscribe(
+      (data) => {
+        this.isLoading = false;
+        let dataArray = data.data.fetchMessages;
+        if (dataArray != undefined && dataArray.length > 0) {
+          dataArray.forEach((message, idx) => {
+            message["status"] = "Sent";
+            message["time"] = moment(message.createdAt).format('hh:mm');
+            if (isOld) {
+              this.previouseMessage(message);
+
+            }
+          })
+          this.keepScrollCurrentPosition();
+        } else if (dataArray == undefined && data.data.length == 0) {
+          this.isDataFetchedAll = true;
+        }
+      },
+      (err) => {
+        this.isLoading = false;
+        throw err;
+      }
+    )
+  }
+  onUserChange(event) {
+    let selectedUserId = event.target.value;
+    if (this.selectedUser._id != selectedUserId) {
+      this.selectedUser = (this.users.filter(item => item._id == selectedUserId))[0];
+      this.resetProperty();
+    }
   }
   //#region APIs
   fetchLatestMessages() {
@@ -177,23 +239,7 @@ query {
   }
 `,
     });
-    this.service.postBody(body).subscribe({
-      next: (data) => {
-        this.isLoading = false;
-        let dataArray = data.data.fetchMessages;
-        dataArray.sort((a, b) => a._id - b._id);
-        dataArray.forEach((message, idx) => {
-          message["status"] = "Sent";
-          message["time"] = moment(message.createdAt).format('hh:mm');
-          this.outputMessage(message);
-        })
-      },
-      error: (err) => {
-        this.isLoading = false;
-        throw err;
-      }
-
-    })
+    return this.service.postBody(body);
   }
 
   fetchMoreMessages(isOld = true) {
@@ -217,29 +263,7 @@ query {
   }
 `,
     });
-    this.service.postBody(body).subscribe({
-      next: (data) => {
-        this.isLoading = false;
-        let dataArray = data.data.fetchMessages;
-        if (dataArray != undefined && dataArray.length > 0) {
-          dataArray.forEach((message, idx) => {
-            message["status"] = "Sent";
-            message["time"] = moment(message.createdAt).format('hh:mm');
-            if (isOld) {
-              this.previouseMessage(message);
-
-            }
-          })
-          this.keepScrollCurrentPosition();
-        } else if (dataArray == undefined && data.data.length == 0) {
-          this.isDataFetchedAll = true;
-        }
-      },
-      error: (err) => {
-        this.isLoading = false;
-        throw err;
-      }
-    })
+    return this.service.postBody(body);
   }
   fetchUsers() {
     //config pageNumber 
@@ -276,7 +300,7 @@ query {
   }
 
   //#region utils
-  outputMessage(data) {
+  outputMessage(data) : void {
     if (data.text !== "") {
       const chatMessages = document.querySelector(".chats");
       if (data.user.userName == this.selectedUser.userName) {
@@ -355,12 +379,12 @@ query {
       if (data.user.userName == this.selectedUser.userName) {
         let div = this.outgoingMessage(data);
         // jQuery(div).insertAfter(readMoreBtn);
-        this.chatsElement.insertBefore(div,this.chatsElement.firstChild);
+        this.chatsElement.insertBefore(div, this.chatsElement.firstChild);
       }
       else {
         let div = this.incomingMessage(data);
         // jQuery(div).insertAfter(readMoreBtn);
-        this.chatsElement.insertBefore(div,this.chatsElement.firstChild);
+        this.chatsElement.insertBefore(div, this.chatsElement.firstChild);
       }
     }
   }
@@ -376,26 +400,8 @@ query {
   };
 
   //#endregion
-  onUserChange(event) {
-    let selectedUserId = event.target.value;
-    if (this.selectedUser._id != selectedUserId) {
-      this.selectedUser = (this.users.filter(item => item._id == selectedUserId))[0];
-      this.resetProperty();
-    }
-  }
 
-  ngAfterViewInit(): void {
-    this.chatsElement = document.querySelector(".chats");
-    this.oldScrollHeight = this.chatsElement.scrollHeight;
-    this.chatsElement.addEventListener("scroll",(event)=>{
-      this.oldScrollHeight = this.chatsElement.scrollHeight;
-      this.isScrollTop = false;
-      if(this.chatsElement.scrollTop == 0){
-        this.isScrollTop = true;
-      } 
-      
-    })
-  }
+
   ngOnDestroy(): void {
     this.socketService.disconnect();
   }
