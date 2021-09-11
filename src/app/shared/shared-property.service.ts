@@ -7,11 +7,13 @@ export class SharedPropertyService {
 
   constructor() { }
 
-  private _textEditorValue: any = {}
-  get textEditorValue() {
-    return this._textEditorValue;
+  private _isLoading: boolean = false;
+
+  get isLoading() {
+      return this._isLoading;
   }
-  set textEditorValue({ channelId, textValue }) {
-    this._textEditorValue[channelId] = textValue;
+
+  set isLoading(isLoading: boolean) {
+      this._isLoading = isLoading;
   }
 }

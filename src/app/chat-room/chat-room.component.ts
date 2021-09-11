@@ -17,8 +17,8 @@ declare let jQuery: any;
 export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild("chats", { static: true }) chats: ElementRef<HTMLDivElement>;
   private DEBOUNCE_TIME = 500;
-  statusDefault: boolean;
-  currentScrollHeight = 0;
+  isScrollTop = false;
+  oldScrollHeight = 0;
   chatsElement: HTMLElement;
   public messageText: FormControl;
   public message = "";
@@ -31,7 +31,7 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   public isDataFetchedAll = false;
   public isLoading = true;
   panelColor: FormControl;
-  constructor(private socketService: SocketioService, private renderer: Renderer2, private service: ChatServiceService, private shardProperty: SharedPropertyService) {
+  constructor(private socketService: SocketioService, private renderer: Renderer2, private service: ChatServiceService, private sharedProperty: SharedPropertyService) {
   }
 
   ngOnInit(): void {
@@ -55,7 +55,6 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
   selectChannel(channel) {
-
     if (this.selectedChannel.channelId != channel.channelId) {
       this.selectedChannel = channel;
       this.resetProperty();
@@ -67,7 +66,6 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
     this.renderer.setProperty(this.chats.nativeElement, 'innerHTML', "");
     this.insertReadMoreButton();
     this.messageText.setValue(this.getMessageText(this.selectedChannel.channelId));
-    this.currentScrollHeight = 0;
   }
 
 
@@ -273,8 +271,7 @@ query {
   }
   //#endregion
   keepScrollCurrentPosition() {
-    this.chatsElement.scroll(0, this.chatsElement.scrollHeight - this.currentScrollHeight);
-    this.currentScrollHeight = this.chatsElement.scrollHeight;
+    this.chatsElement.scroll(0, this.chatsElement.scrollHeight - this.oldScrollHeight);
   }
 
   //#region utils
@@ -353,14 +350,16 @@ query {
       div.innerHTML = ` <h5> <b>${data.user.userName} </b></h5>
   <p>${data.text} </p>
     `;
-      const readMoreBtn = document.querySelector(".btn-readMore");
+      const readMoreBtn = document.querySelector(".readmore-section");
       if (data.user.userName == this.selectedUser.userName) {
         let div = this.outgoingMessage(data);
-        jQuery(div).insertAfter(readMoreBtn);
+        // jQuery(div).insertAfter(readMoreBtn);
+        this.chatsElement.insertBefore(div,this.chatsElement.firstChild);
       }
       else {
         let div = this.incomingMessage(data);
-        jQuery(div).insertAfter(readMoreBtn);
+        // jQuery(div).insertAfter(readMoreBtn);
+        this.chatsElement.insertBefore(div,this.chatsElement.firstChild);
       }
     }
   }
@@ -392,23 +391,18 @@ query {
     }
   }
 
-  registerEventDelegation() {
-    //register event delegate for readmore button
-    const chatElement = document.querySelector(".chats");
-    chatElement.addEventListener('click', (event: any) => {
-      if (event.target.tagName == "BUTTON" && event.target.className == "btn btn-info btn-readMore") {
-        this.fetchMoreMessages(true);
-      }
+  ngAfterViewInit(): void {
+    this.chatsElement = document.querySelector(".chats");
+    this.oldScrollHeight = this.chatsElement.scrollHeight;
+    this.chatsElement.addEventListener("scroll",(event)=>{
+      this.oldScrollHeight = this.chatsElement.scrollHeight;
+      this.isScrollTop = false;
+      if(this.chatsElement.scrollTop == 0){
+        this.isScrollTop = true;
+      } 
+      
     })
   }
-  ngAfterViewInit(): void {
-    this.registerEventDelegation();
-    this.chatsElement = document.querySelector(".chats");
-    this.currentScrollHeight = this.chatsElement.scrollHeight;
-  }
-
-
-
   ngOnDestroy(): void {
     this.socketService.disconnect();
   }

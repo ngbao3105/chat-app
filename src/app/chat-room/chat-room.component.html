@@ -41,24 +41,24 @@
     </div>
 
     <div class="chat-window">
-      <div class="chats" #chats>
-       
-        <button type="button" class="btn btn-info btn-readMore">
-          Read More <i class="fa fa-arrow-up"></i>
-        </button>
-      </div>
+      <ng-container *ngIf="this.isScrollTop">
+        <div class="readmore-section">
+          <ng-container *ngIf="isLoading">
+            <div class="app-mat-spinner">
+              <mat-spinner color="primary" mode="indeterminate"></mat-spinner>
+            </div>
+          </ng-container>
+          <button type="button" class="btn btn-info" (click)="fetchMoreMessages()">
+            Read More
+            <i class="fa fa-arrow-up"></i>
+          </button>
+        </div>
+      </ng-container>
+      <div class="chats" #chats></div>
+      
       <div class="user-input">
         <input
           class="input-message"
-          style="
-            font-size: 16px;
-            background-color: #ffffff;
-            padding: 10px 20px;
-            outline: none;
-            border: none;
-            width: 80%;
-            border-radius: 10px 0 0 10px;
-          "
           [formControl]="messageText"
           [(ngModel)]="message"
           (keydown.enter)="sendMessage($event)"
@@ -68,16 +68,6 @@
         <button
           class="btn btn-send"
           (click)="sendMessage($event)"
-          style="
-            font-size: 17px;
-            padding: 10px 20px;
-            border: none;
-            outline: none;
-            width: 15%;
-            color: #ffffff;
-            background-color: #2791cf;
-            border-radius: 0 10px 10px 0;
-          "
         >
           <i class="fas fa-paper-plane" style="color: white"></i>
         </button>

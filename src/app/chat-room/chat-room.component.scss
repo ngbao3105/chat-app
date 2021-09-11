@@ -118,6 +118,7 @@ $borderRadius: 10px;
   .chat-window {
     width: 100%;
     // height: 80vh;
+    min-height: 70vh;
     background-color: $dark-grey;
     border-radius: $borderRadius;
     color: $white;
@@ -128,11 +129,11 @@ $borderRadius: 10px;
     }
 
     .chats {
-      min-height: 65vh;
-      max-height: 70vh;
+      height: 70vh;
+      // max-height: 70vh;
       overflow-y: auto;
       padding: 20px;
-
+  
       .user-join {
         font-size: 0.9rem;
         background-color: $white;
@@ -144,7 +145,7 @@ $borderRadius: 10px;
         margin-bottom: 15px;
         ;
       }
-
+  
       .message {
         color: $dark-grey;
         // background-color: $white;
@@ -158,7 +159,7 @@ $borderRadius: 10px;
         flex: 1;
         flex-direction: row;
         margin-bottom: 40px;
-
+  
         .outgoing.incoming {
           display: flex;
           text-align: left;
@@ -166,27 +167,27 @@ $borderRadius: 10px;
           flex-direction: row;
           margin-bottom: 40px;
         }
-
+  
         p {
           font-size: $fsize;
         }
-
+  
         .chat-avatar {
           margin-right: 20px;
           flex-direction: column;
-
+  
           img {
             width: 48px;
             height: 48px;
           }
-
+  
           .chat-name {
             font-size: .75rem;
             color: $white;
             text-align: center;
           }
         }
-
+  
         .chat-text {
           padding: .4rem 1rem;
           -webkit-border-radius: 4px;
@@ -197,7 +198,7 @@ $borderRadius: 10px;
           line-height: 150%;
           position: relative;
         }
-
+  
         .chat-text:before {
           content: '';
           position: absolute;
@@ -208,42 +209,42 @@ $borderRadius: 10px;
           border: 10px solid;
           border-color: transparent $light-grey transparent transparent;
         }
-
+  
         .chat-hour>span.fa-check-circle {
           font-size: 16px;
           color: #9ec94a;
         }
-
+  
         .chat-hour>span.fa-exclamation-circle {
           font-size: 16px;
           color: #b71e3c;
         }
-
+  
         .incoming .chat-info {
           display: flex;
           flex-direction: column;
           align-items: flex-start;
         }
-
+  
         .chat-hour {
           padding: 0;
           margin-left: 10px;
           font-size: 0.80rem;
         }
       }
-
+  
       .outgoing {
         margin-left: auto;
         justify-content: flex-end;
         color: $white;
         // border-radius: 50px 10px 10px 50px;
         border-radius: $borderRadius;
-
+  
         .chat-avatar {
           margin-left: 20px;
           margin-right: 0;
         }
-
+  
         .chat-text:before {
           right: -20px;
           border-color: transparent transparent transparent $light-blue;
@@ -258,40 +259,42 @@ $borderRadius: 10px;
           align-items: flex-end;
         }
       }
-
-
-
-      .user-input {
-        @include flexing(row, space-between, stretch);
-        padding: 20px;
-        margin-bottom: 0px;
-
-        input.input-message {
-          font-size: 16px !important;
-          background-color: $white !important;
-          padding: 10px 20px !important;
-          outline: none !important;
-          border: none !important;
-          width: 95% !important;
-          border-radius: 50px 0 0 50px !important;
-        }
-
-        button.btn-send {
-          font-size: 17px !important;
-          padding: 10px 20px !important;
-          border: none !important;
-          outline: none !important;
-          width: 5% !important;
-          color: $white !important;
-          background-color: $light-blue !important;
-          border-radius: 0 50px 50px 0;
-        }
-
-      }
-
-
+  
+  
+  
+  
+  
+  
     }
   }
+}
+
+.user-input {
+  @include flexing(row, space-between, stretch);
+  padding: 20px;
+  margin-bottom: 0px;
+
+  input.input-message {
+    font-size: $fsize;
+    background-color: $white;
+    padding: 10px 20px;
+    outline: none;
+    border: none;
+    width: 85%;
+    border-radius: $borderRadius 0 0 $borderRadius;
+  }
+
+  button.btn-send {
+    font-size: 17px;
+    padding: 10px 20px;
+    border: none;
+    outline: none;
+    width: 15%;
+    color: $white;
+    background-color: $light-blue;
+    border-radius: 0 10px 10px 0;
+  }
+
 }
 
 .active {
@@ -308,6 +311,28 @@ button.btn-info {
   background-color: $dark-grey;
   border-radius: 5px;
   width: 100%;
+}
+
+.readmore-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+//// Spinner
+.app-mat-spinner {
+  .mat-progress-spinner {
+      width: 32px !important;
+      height: 32px !important;
+
+      svg {
+          width: 20px !important;
+          height: 20px !important;
+      }
+      circle{
+        stroke: $light-grey;
+      }
+  }
 }
 
 // < 900px
