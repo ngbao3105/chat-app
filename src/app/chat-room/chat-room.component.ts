@@ -1,9 +1,8 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewChild, ViewEncapsulation } from '@angular/core';
-import { SocketioService } from '../socketio.service';
+import { SocketioService } from '../shared/socketio.service';
 import * as moment from 'moment';
 import { FormControl } from '@angular/forms';
-import { Users, Channels } from "../dataJson";
-import { ChatServiceService } from '../chat-service.service';
+import { ChatServiceService } from '../shared/chat-service.service';
 import { SharedPropertyService } from '../shared/shared-property.service';
 import { takeUntil, debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
 import { forkJoin } from 'rxjs';
@@ -50,6 +49,9 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
       ).subscribe(value => {
         this.storeMessageText(this.selectedChannel.channelId, value);
       });
+    },error => {
+      this.isLoading = false;
+      throw error;
     });
   }
 
@@ -64,7 +66,6 @@ export class ChatRoomComponent implements OnInit, OnDestroy, AfterViewInit {
   resetProperty() {
     this.leaveAndJoinChannel();
     this.renderer.setProperty(this.chats.nativeElement, 'innerHTML', "");
-    this.insertReadMoreButton();
     this.messageText.setValue(this.getMessageText(this.selectedChannel.channelId));
   }
 
@@ -374,14 +375,6 @@ query {
     }
   };
 
-  insertReadMoreButton() {
-    const button = document.createElement("button");
-    button.innerHTML = `Read More <i class="fa fa-arrow-up"></i>`;
-    // <button type="button" class="btn btn-info btn-readMore">
-    button.classList.add("btn", "btn-info", "btn-readMore");
-    const chatMessages = document.querySelector(".chats");
-    chatMessages.appendChild(button);
-  }
   //#endregion
   onUserChange(event) {
     let selectedUserId = event.target.value;
