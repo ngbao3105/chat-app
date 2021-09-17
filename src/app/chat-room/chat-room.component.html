@@ -1,9 +1,6 @@
-
 <div class="wrapper">
   <div class="title">
-    <h1>
-      One Day Chat App 
-    </h1>
+    <h1>One Day Chat App</h1>
   </div>
   <div class="container">
     <div class="left-side-bar">
@@ -41,37 +38,93 @@
     </div>
 
     <div class="chat-window">
-      <ng-container *ngIf="this.isScrollTop">
+      <ng-container *ngIf="isLoading">
         <div class="readmore-section">
-          <ng-container *ngIf="isLoading">
+          <!-- <ng-container *ngIf="isLoading"> -->
             <div class="app-mat-spinner">
               <mat-spinner color="primary" mode="indeterminate"></mat-spinner>
             </div>
-          </ng-container>
-          <button type="button" class="btn btn-info" (click)="readMoreMessage(true)">
+         <!-- </ng-container>  -->
+          <!-- <button
+            type="button"
+            class="btn btn-info"
+            (click)="readMoreMessage(true)"
+          >
             Read More
             <i class="fa fa-arrow-up"></i>
-          </button>
+          </button>  -->
         </div>
       </ng-container>
-      <div class="chats" #chats></div>
-      
+      <!-- <div class="chats" #chats> -->
+      <cdk-virtual-scroll-viewport itemSize="66" class="chats" #chats>
+        <div *cdkVirtualFor="let data of sources | async; templateCacheSize: 5">
+          <ng-container
+            *ngTemplateOutlet="
+              data?.user?.userName == selectedUser?.userName
+                ? outgoing
+                : incoming;
+              context: { $implicit: data }
+            "
+          >
+          </ng-container>
+        </div>
+      </cdk-virtual-scroll-viewport>
+      <!-- </div> -->
+
       <div class="user-input">
         <input
           class="input-message"
           [formControl]="messageText"
-          [(ngModel)]="message"
           (keydown.enter)="sendMessage($event)"
           type="text"
           placeholder="Type your message..."
         />
-        <button
-          class="btn btn-send"
-          (click)="sendMessage($event)"
-        >
+        <button class="btn btn-send" (click)="sendMessage($event)">
           <i class="fas fa-paper-plane" style="color: white"></i>
         </button>
       </div>
     </div>
   </div>
 </div>
+
+<ng-template #outgoing let-data>
+  <message>
+    <div  class="message outgoing">
+      <div class="chat-info">
+        <div class="chat-text">
+          {{ data.text }}
+        </div>
+        <div class="chat-hour">
+          {{ data.time }}
+          <span class="fa fa-check-circle" style="margin-left: 5px"></span>
+          <span style="margin: 5px" class="chat-message">{{
+            data.status
+          }}</span>
+        </div>
+      </div>
+      <div class="chat-avatar">
+        <img src="../assets/img/{{ data.user.avatar }}" alt="User" />
+        <div class="chat-name">
+          <b>{{ data.user.userName }}</b>
+        </div>
+      </div>
+    </div>
+  </message>
+</ng-template>
+
+<ng-template #incoming let-data>
+  <message>
+    <div class="message incoming">
+      <div class="chat-avatar">
+        <img src="../assets/img/{{ data.user.avatar }}" alt="User" />
+        <div class="chat-name">
+          <b>{{ data.user.userName }}</b>
+        </div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-text">{{ data.text }}</div>
+        <div class="chat-hour">{{ data.time }}</div>
+      </div>
+    </div>
+  </message>
+</ng-template>
