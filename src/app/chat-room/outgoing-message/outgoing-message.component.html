@@ -1,0 +1,20 @@
+<div  class="message outgoing">
+    <div class="chat-info">
+      <div class="chat-text">
+        {{ data?.text }}
+      </div>
+      <div class="chat-hour">
+        {{ data?.time }}
+        <span class="fa fa-check-circle" style="margin-left: 5px"></span>
+        <span style="margin: 5px" class="chat-message">{{
+          data?.status
+        }}</span>
+      </div>
+    </div>
+    <div class="chat-avatar">
+      <img src="../assets/img/{{ data?.user?.avatar }}" alt="User" />
+      <div class="chat-name">
+        <b>{{ data?.user?.userName }}</b>
+      </div>
+    </div>
+  </div>

@@ -9,7 +9,7 @@ import { ChatRoomModule } from './chat-room/chat-room.module';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 @NgModule({
   declarations: [
     AppComponent,
@@ -18,7 +18,7 @@ import { HttpClientModule } from '@angular/common/http';
     CommonModule,
     BrowserModule,
     BrowserAnimationsModule,
-    HttpClientModule,
+    HttpClient,
     ChatRoomModule,
     AppRoutingModule,
     ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production })

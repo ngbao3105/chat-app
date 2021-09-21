@@ -5,7 +5,7 @@ import { FormControl } from '@angular/forms';
 import { ChatServiceService } from '../shared/chat-service.service';
 import { SharedPropertyService } from '../shared/shared-property.service';
 import { takeUntil, debounceTime, distinctUntilChanged, skip } from 'rxjs/operators';
-import { BehaviorSubject, forkJoin, fromEvent, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, forkJoin, Subject } from 'rxjs';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 declare let jQuery: any;
 @Component({

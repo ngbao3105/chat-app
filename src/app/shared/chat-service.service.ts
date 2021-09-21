@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class ChatServiceService {
 
-  constructor(private http: HttpClient)  { }
+  constructor(@Inject(HttpClient) private http: HttpClient)  { }
   private graphqlUrl = "http://localhost:3000/graphql";
   postBody(body) : Observable<any>{
     const headers = { 'Content-Type': 'application/json'  };

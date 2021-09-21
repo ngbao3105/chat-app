@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 
 import { ChatRoomRoutingModule } from './chat-room-routing.module';
 import { ChatRoomComponent } from './chat-room.component';
-import { MessageComponent } from '../message/message.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { MatSelectModule } from '@angular/material/select';
@@ -15,12 +14,17 @@ import { MatListModule } from '@angular/material/list';
 import { MatOptionModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CommonModule } from '@angular/common';
+import { WidgetMessageComponent } from './widget-message/widget-message.component';
+import { IncomingMessageComponent } from './incoming-message/incoming-message.component';
+import { OutgoingMessageComponent } from './outgoing-message/outgoing-message.component';
 
 
 
 @NgModule({
   declarations: [ChatRoomComponent,
-    MessageComponent],
+    WidgetMessageComponent,
+    IncomingMessageComponent,
+    OutgoingMessageComponent],
   imports: [
     CommonModule,
     ChatRoomRoutingModule,
